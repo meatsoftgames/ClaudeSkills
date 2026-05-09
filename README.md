@@ -20,10 +20,10 @@ Add the marketplace to `extraKnownMarketplaces` and enable the plugin in `enable
 ```json
 {
   "enabledPlugins": {
-    "claude-skills@meatsoftgames-ClaudeSkills": true
+    "claude-skills@claude-skills": true
   },
   "extraKnownMarketplaces": {
-    "meatsoftgames-ClaudeSkills": {
+    "claude-skills": {
       "source": {
         "source": "github",
         "repo": "meatsoftgames/ClaudeSkills"
@@ -32,6 +32,8 @@ Add the marketplace to `extraKnownMarketplaces` and enable the plugin in `enable
   }
 }
 ```
+
+The marketplace key (`claude-skills`) must match the `name` field in `.claude-plugin/marketplace.json`. The plugin identifier is `<plugin-name>@<marketplace-name>` — both are `claude-skills` here.
 
 Then restart Claude. Verify with `/claude-skills:hello` — should respond "claude-skills plugin is working!".
 
