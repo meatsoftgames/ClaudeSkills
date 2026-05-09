@@ -19,7 +19,7 @@ Ask the user two questions:
 Create a private repo under the user's GitHub account using the UnityTemplate:
 
 ```bash
-"/c/Program Files/GitHub CLI/gh.exe" repo create mattsmithone/<project-name> --private --description "<project-name> - Unity project" --template mattsmithone/UnityTemplate
+"/c/Program Files/GitHub CLI/gh.exe" repo create meatsoftgames/<project-name> --private --description "<project-name> - Unity project" --template meatsoftgames/UnityTemplate
 ```
 
 ## Step 3: Clone to Correct Location
@@ -28,7 +28,7 @@ Create a private repo under the user's GitHub account using the UnityTemplate:
 - **Package projects** clone to: `E:\Personal\Packages\<project-name>`
 
 ```bash
-"/c/Program Files/GitHub CLI/gh.exe" repo clone mattsmithone/<project-name> "<target-path>"
+"/c/Program Files/GitHub CLI/gh.exe" repo clone meatsoftgames/<project-name> "<target-path>"
 ```
 
 ## Step 4: Update Project Settings
@@ -135,7 +135,7 @@ target: <brief one-line goal — ask the user or infer from project name>
 
 `<target-path>`
 
-GitHub: `https://github.com/mattsmithone/<project-name>`
+GitHub: `https://github.com/meatsoftgames/<project-name>`
 
 ## Current Focus
 
@@ -178,7 +178,7 @@ git push -u origin main
 ## Step 8: Report
 
 Tell the user:
-- The repo URL: `https://github.com/mattsmithone/<project-name>`
+- The repo URL: `https://github.com/meatsoftgames/<project-name>`
 - The local path
 - The Obsidian project page location
 - Whether package scaffolding was created

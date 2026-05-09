@@ -20,13 +20,13 @@ Add the marketplace to `extraKnownMarketplaces` and enable the plugin in `enable
 ```json
 {
   "enabledPlugins": {
-    "claude-skills@mattsmithone-ClaudeSkills": true
+    "claude-skills@meatsoftgames-ClaudeSkills": true
   },
   "extraKnownMarketplaces": {
-    "mattsmithone-ClaudeSkills": {
+    "meatsoftgames-ClaudeSkills": {
       "source": {
         "source": "github",
-        "repo": "mattsmithone/ClaudeSkills"
+        "repo": "meatsoftgames/ClaudeSkills"
       }
     }
   }
