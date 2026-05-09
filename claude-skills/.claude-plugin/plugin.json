@@ -1,0 +1,9 @@
+{
+  "name": "claude-skills",
+  "version": "0.1.0",
+  "description": "Personal Claude Code skills",
+  "author": {
+    "name": "Matt Smith"
+  },
+  "repository": "https://github.com/mattsmithone/ClaudeSkills"
+}
