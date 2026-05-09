@@ -1,6 +1,6 @@
 ---
 name: end-project
-description: Use when the user says "end the session", "wrap up", "end project", "close out the session", or a clear variant. Captures what shipped this session so context can be cleared and a future session can resume cleanly. Writes to repo docs (devlog, decisions, gotchas, HANDOFF, etc.) as the source of truth, then mirrors to Notion as a backup. Calls create-documentation first if the standard doc structure is missing. Don't skip the repo writes.
+description: Use when the user says "end the session", "wrap up", "end project", "close out the session", or a clear variant. Captures what shipped this session so context can be cleared and a future session can resume cleanly. Writes to repo docs (devlog, decisions, gotchas, HANDOFF, etc.) as the source of truth, then mirrors to Notion as a backup. Calls initialize-project first if the standard doc structure is missing. Don't skip the repo writes.
 user_invocable: true
 ---
 
@@ -30,7 +30,7 @@ Mid-session the conversation holds the full picture. The moment it ends, all of 
 - `docs/documentation/`
 - `docs/tasks.md`, `docs/FAQ.md`, `docs/gotchas.md`
 
-If anything is missing, **run the create-documentation skill first** to scaffold what's missing, then continue.
+If anything is missing, **run the initialize-project skill first** to scaffold what's missing, then continue.
 
 **Build a short list** of what the session did before writing: what changed, commit(s), motive.
 
