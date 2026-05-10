@@ -35,6 +35,18 @@ Run in parallel:
 
 Note whether the branch is ahead of origin (something committed but unpushed) or if there's a dirty working tree that doesn't match the devlog's "Handoff state" — both are real signals.
 
+### 2.5. Active branch context (if not on `main`/`master`)
+
+If `git branch --show-current` returns anything other than `main` or `master`, you're mid-feature. Before continuing, read the work-in-progress docs for this branch:
+
+1. **Find the spec.** Look in `docs/specs/` for a file whose name matches the branch's short name (strip the `feature/` prefix and any leading date). Try exact match first, then fuzzy (substring, kebab-case variants). If multiple candidates, list them and ask which is the active one.
+2. **Read the spec in full.** This is the *what* and *why* of the branch — short enough to read whole.
+3. **Find and read the master plan** for that spec. Same name match, but in `docs/plans/`. If the plan references sub-plans (e.g. "see `docs/plans/<name>-phase-2.md`" or links to other plan files), read those too — sub-plans first to last.
+4. **Cross-check progress** against the plan's `- [ ]` / `- [x]` checkboxes vs. the commits on the branch since it diverged from main: `git log main..HEAD --oneline`. Note any drift between the plan and the actual commits.
+5. If there's no spec/plan for this branch, say so explicitly — that branch is operating on the lighter flow, and the devlog/git history is the only record.
+
+Skip this step entirely on `main`/`master` — it's not relevant.
+
 ### 3. Obsidian project folder (if available)
 
 Check whether `mcp__obsidian__*` tools are loaded. If not, skip this section silently — don't apologize for its absence, just move on.
@@ -62,6 +74,7 @@ Include:
 3. **Next-session notes.** If `HANDOFF.md` exists, or the most recent devlog has an explicit next-session section, surface the items — paraphrased, not quoted in full.
 4. **Readiness.** Say "ready to work" explicitly. That's the signal the user is waiting for.
 5. **Clarifying questions — only if genuinely ambiguous.** If the docs cleanly point at next steps, don't invent questions. If they conflict or if there's an unresolved decision pending, ask.
+6. **Active-branch state (if non-main).** Which spec/plan you read, where progress sits against the plan checkboxes, and any drift between plan and commits.
 
 Match the user's preferred tone if CLAUDE.md or saved memory specifies it. The default is concise, direct, no preamble, no trailing summary.
 
