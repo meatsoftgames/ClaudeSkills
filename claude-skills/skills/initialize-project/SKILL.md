@@ -1,15 +1,16 @@
 ---
 name: initialize-project
-description: Use when starting a new project (any language/framework — Unity, web, C++, library, generic) that needs the standard MeatSoft setup. Verifies the superpowers plugin is installed (blocks if not), builds the docs/ scaffolding silently, then interactively generates a tailored CLAUDE.md baking in the development flow, approval gates, code principles, pushback expectations, and superpowers integration. Single entry point — replaces the older create-claude-md and create-documentation skills. Refuses to silently overwrite an existing CLAUDE.md with real content.
+description: Use when starting a new project OR upgrading an existing one (any language/framework — Unity, web, C++, library, generic) to the standard MeatSoft setup. Verifies the superpowers plugin is installed (blocks if not), builds the docs/ scaffolding silently, scaffolds PROJECT.md alongside CLAUDE.md, then interactively generates a tailored CLAUDE.md baking in the required-reading rule (CLAUDE.md + PROJECT.md every session), development flow, approval gates, code principles, pushback expectations, doc-path overrides for superpowers, and superpowers integration. When an existing CLAUDE.md has real content, migrates project-specific blocks (architecture, project rules, conventions, etc.) into PROJECT.md before regenerating CLAUDE.md from the latest template. Single entry point — replaces the older create-claude-md and create-documentation skills.
 user_invocable: true
 ---
 
 # Initialize Project
 
-Sets up a project for the MeatSoft workflow. Two outputs:
+Sets up a project for the MeatSoft workflow. Three outputs:
 
 1. **`docs/` scaffolding** — created silently, only what's missing.
-2. **`CLAUDE.md`** — interactive, shown before saving.
+2. **`PROJECT.md`** — created silently if missing (stub, user fills in later).
+3. **`CLAUDE.md`** — interactive, shown before saving.
 
 Idempotent: safe to re-run. Won't clobber existing files.
 
@@ -45,9 +46,24 @@ Do not proceed with anything else (no doc scaffolding, no CLAUDE.md). The skill 
 
 Read `./CLAUDE.md` if it exists.
 
-- Missing → continue.
-- Stub-only (no Development flow / Approval semantics sections) → continue, mention you'll replace it.
-- Real custom content → show the user the existing file and ask: **replace / abort**. Do not proceed without an answer. (Merge is not offered automatically — if they want to merge, they handle it manually after seeing the new render.)
+- **Missing** → continue.
+- **Stub-only** (no Development flow / Approval semantics sections) → continue, mention you'll replace it.
+- **Real custom content** → migrate, then upgrade. Do **not** silently overwrite.
+
+**Migration path** (when real content exists):
+
+1. Read the file. Identify two kinds of content:
+   - **Behavior content** — anything that matches the template's sections (development flow, approval semantics, code principles, tone, pushback, decisions/blockers, etc.). This is owned by the new CLAUDE.md template and gets dropped on regeneration.
+   - **Project content** — architecture notes, project-specific rules, best practices, conventions, repo-specific gotchas, anything in a `Project-specific notes` section, or any heading not in the template. **This belongs in `PROJECT.md`.**
+2. Show the user a clear breakdown:
+   - "Going to migrate these blocks to `PROJECT.md`: …" (list each block with its source heading and a short preview)
+   - "Going to drop these blocks (covered by new CLAUDE.md template): …"
+   - "Anything I missed or misclassified?"
+3. Wait for the user's go/edit/abort.
+4. On **go**: write the project blocks into `PROJECT.md` under the appropriate stub sections (Architecture / Project rules / Best practices / Conventions / Notes). If `PROJECT.md` already exists with content, **append** under each section rather than overwriting — never destroy existing PROJECT.md content. Then continue to step 3 to regenerate CLAUDE.md.
+5. On **abort**: stop, no changes.
+
+If the user contests the classification, adjust and re-show before writing.
 
 ### 3. Ask questions, sequentially
 
@@ -79,6 +95,7 @@ Files and stubs:
 - `docs/tasks.md` — stub below.
 - `docs/FAQ.md` — stub below.
 - `docs/gotchas.md` — stub below.
+- `PROJECT.md` (project root, alongside CLAUDE.md) — stub below.
 
 Do **not** create `CLAUDE.md` here — that's step 5.
 
@@ -98,8 +115,9 @@ Do **not** create `CLAUDE.md` here — that's step 5.
 Report:
 
 - Doc scaffolding: created vs already existed (group by path).
+- `PROJECT.md`: created (stub) vs already existed.
 - CLAUDE.md: written / aborted, project type, Unity MCP section in or out, extras appended y/n.
-- Reminder: nothing was committed; user reviews and commits.
+- Reminder: nothing was committed; user reviews and commits. Also remind the user to fill in `PROJECT.md` — it ships as a stub.
 
 Then stop.
 
@@ -112,6 +130,22 @@ Use verbatim. Do not paraphrase the rules — wording matters.
 
 Orientation for working on this project.
 
+## Session start — required reading
+
+On every session open, read these in order **before any other action**:
+
+1. **`CLAUDE.md`** (this file) — how Claude should behave: rules, processes, approval gates, tone. Highest priority.
+2. **`PROJECT.md`** — this project's specifics: architecture, project rules, best practices, conventions. Second priority. **If it does not exist, create it from a stub.**
+
+Then wait for `/claude-skills:resume-project` before doing any deeper context loading (recent work, branch state, devlog, Notion, etc).
+
+**Order of precedence** (highest to lowest):
+
+1. CLAUDE.md (this file)
+2. PROJECT.md
+3. Superpowers skill defaults
+4. Anything else
+
 ## Required tooling
 
 The **superpowers** plugin (`obra/superpowers-marketplace`) must be installed. Its skills auto-activate — relevant ones include `writing-plans`, `executing-plans`, `test-driven-development`, `subagent-driven-development`, `requesting-code-review`. If superpowers is not available, stop and ask the user to install it before proceeding.
@@ -121,9 +155,15 @@ The **superpowers** plugin (`obra/superpowers-marketplace`) must be installed. I
 /plugin install superpowers@superpowers-marketplace
 ```
 
-## Session start
+## Document paths — override superpowers defaults
 
-Wait for `/claude-skills:resume-project`. Do not auto-load context.
+Superpowers' skills (`writing-plans`, `executing-plans`, `requesting-code-review`, etc.) default to their own paths for specs, plans, and decisions. **Always override to use ours when our folders exist:**
+
+- Specs → `docs/specs/`
+- Plans → `docs/plans/`
+- Decisions → `docs/decisions/`
+
+If one of our folders is missing, fall back to the superpowers default for that document type only — don't create new top-level paths.
 
 ## Doc layout
 
@@ -324,4 +364,34 @@ _No questions yet._
 Numbered list of post-hoc "we got bitten by X" notes.
 
 Format: short title, what bit us, the fix, and a `See:` pointer to the commit or file.
+```
+
+### `PROJECT.md` (project root, alongside CLAUDE.md)
+
+```markdown
+# PROJECT.md — <Project Name>
+
+Project specifics. Read on every session open immediately after `CLAUDE.md`.
+
+This file holds what's true about *this* project — rules, architecture, conventions — separate from `CLAUDE.md` which holds how Claude should behave on *any* project.
+
+## Architecture
+
+_TODO: high-level shape of the system. Subsystems, data flow, where things live, what calls what._
+
+## Project rules
+
+_TODO: rules that apply specifically to this project (not Claude's general behavior). Things like "never modify generated/ by hand", "all public APIs go through X", "config lives in Y", etc._
+
+## Best practices
+
+_TODO: project-specific practices the team has settled on. Patterns to follow, anti-patterns to avoid, idioms used here._
+
+## Conventions
+
+_TODO: naming, file layout, commit message style, branch names, anything codified._
+
+## Notes
+
+_TODO: anything else worth knowing that doesn't fit above._
 ```
