@@ -42,18 +42,12 @@ using System.IO;
 [InitializeOnLoad]
 public static class ClaudeAutoStart
 {
+    const string SessionKey = "ClaudeAutoStart.Spawned";
+
     static ClaudeAutoStart()
     {
-        var sentinel = Path.Combine(Path.GetTempPath(),
-            $"claude_rc_{Application.dataPath.GetHashCode():X}.lock");
-
-        if (File.Exists(sentinel)) return;
-        File.WriteAllText(sentinel, System.DateTime.Now.ToString());
-
-        EditorApplication.quitting += () => {
-            if (File.Exists(sentinel)) File.Delete(sentinel);
-        };
-
+        if (SessionState.GetBool(SessionKey, false)) return;
+        SessionState.SetBool(SessionKey, true);
         SpawnSession();
     }
 
@@ -68,12 +62,12 @@ public static class ClaudeAutoStart
         {
             FileName = "wt.exe",
             Arguments = $"new-tab --suppressApplicationTitle --title \"{title}\" " +
-                        $"--startingDirectory \"{projectRoot}\" cmd /k claude --rc \"{sessionName}\"",
+                        $"--startingDirectory \"{projectRoot}\" cmd /k claude --remote-control \"{sessionName}\"",
             UseShellExecute = true,
             CreateNoWindow = false,
         };
         Process.Start(psi);
-        UnityEngine.Debug.Log($"[ClaudeAutoStart] Spawned Remote Control session for {projectRoot}");
+        UnityEngine.Debug.Log($"[ClaudeAutoStart] Spawned Remote Control session '{sessionName}' for {projectRoot}");
     }
 }
 ```
@@ -84,9 +78,9 @@ Do not generate a `.meta` file — Unity creates it on next refresh.
 
 Tell the user:
 - File installed at `Assets/Claude/Scripts/Editor/ClaudeAutoStart.cs`.
-- On the next time the Unity Editor opens (or after a recompile in a fresh session), a Windows Terminal tab will spawn titled `Claude: <project-folder-name>` running `claude --rc "<project-folder-name>-remote"` from the project root, so the remote-control session is registered as `<project-folder-name>-remote` (e.g. `reaver-remote`).
+- On the next time the Unity Editor opens (or after a recompile in a fresh session), a Windows Terminal tab will spawn titled `Claude: <project-folder-name>` running `claude --remote-control "<project-folder-name>-remote"` from the project root, so the remote-control session is registered as `<project-folder-name>-remote` (e.g. `reaver-remote`).
 - The `MeatSoft > AI > Start Claude Remote Session` menu item relaunches the session manually whenever needed.
-- The sentinel lock file at `%TEMP%\claude_rc_<hash>.lock` prevents duplicate spawns within a single Editor session and is cleaned up on quit.
+- Unity's `SessionState` prevents duplicate spawns within a single Editor session and is automatically cleared when the Editor exits (even on crash/force-close), so the next launch always spawns cleanly.
 - Requirements: `wt.exe` (Windows Terminal) and `claude` must be on PATH.
 
 ## Notes
