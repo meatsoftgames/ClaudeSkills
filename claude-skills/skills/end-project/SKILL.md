@@ -1,6 +1,6 @@
 ---
 name: end-project
-description: Use when the user says "end the session", "wrap up", "end project", "close out the session", or a clear variant. Captures what shipped this session so context can be cleared and a future session can resume cleanly. Writes to repo docs (devlog, decisions, gotchas, HANDOFF, etc.) as the source of truth, then mirrors to Notion as a backup. Calls initialize-project first if the standard doc structure is missing. Don't skip the repo writes.
+description: Use when the user says "end the session", "wrap up", "end project", "close out the session", or a clear variant. Captures what shipped this session so context can be cleared and a future session can resume cleanly. Writes to repo docs (devlog, decisions, gotchas, HANDOFF, plugin-reference if present, etc.) as the source of truth, then mirrors to Notion as a backup. Calls initialize-project first if the standard doc structure is missing. Don't skip the repo writes.
 user_invocable: true
 ---
 
@@ -137,13 +137,37 @@ Rewrite, don't append. Sections (trim what doesn't apply):
 - **Validation pending** — what's unverified, by platform if relevant
 - **Key file references** — paths the session touched
 
-### 9. Project-specific docs (per CLAUDE.md)
+### 9. docs/plugin-reference.md (if it exists — required update)
+
+If `docs/plugin-reference.md` is present, **it must be updated** to reflect any work this session that affects how the plugin is structured, exposed, or used. This includes:
+
+- New or removed plugin entry points, commands, hooks, or extension surfaces.
+- Changes to how the plugin is loaded, configured, or discovered.
+- Renamed/moved files that the reference points at.
+- New conventions or patterns adopted in this session that future-you would need to know.
+
+Read the file first, then patch the affected sections. If nothing in the session touched plugin shape or behavior, say so explicitly in the session summary — don't silently skip.
+
+If the file doesn't exist, skip this step (the project isn't a plugin project).
+
+### 10. Project-specific docs (per CLAUDE.md)
 
 If `CLAUDE.md` lists project-specific docs to keep current (architecture plans, phase docs, etc.), update them per the project's conventions. The skill doesn't know what those are — read CLAUDE.md and follow its guidance.
 
+## Cold-start check
+
+Before committing, stop and read the docs you just wrote as if you were a fresh agent with zero conversation context. Open `docs/HANDOFF.md`, the new devlog entry, and any updated decisions/gotchas. Ask:
+
+- If I started a new session right now and only had these files, could I pick up the next task without asking the user a clarifying question?
+- Is the "Next session options" section concrete enough to act on, or does it lean on context only this session has?
+- Are commit hashes, file paths, and the current branch/working-tree state all captured?
+- Are inferred motives flagged so a future-me doesn't treat guesses as fact?
+
+If anything is missing or vague, fix it now — then commit.
+
 ## Sync to Notion (after repo is sorted)
 
-Only do this if Notion MCP tools are loaded (`mcp__*notion*`) and the writes are quick. If they fail or hang, skip and continue — Notion is a reference layer, the repo is authoritative.
+**Non-negotiable.** Notion sync must happen every session. If the Notion MCP tools (`mcp__*notion*`) aren't loaded, stop and tell the user — don't quietly skip. If a write fails, diagnose and retry; don't move on with a half-synced state.
 
 **Find the matching Notion project page.** Search for the repo / display name. If ambiguous, ask once.
 
@@ -166,10 +190,11 @@ If the *why* isn't clear, ask before writing. Lead with a best-guess motive — 
 - New `docs/devlog/<file>.md`
 - New `docs/decisions/<file>.md`
 - Updated `docs/gotchas.md`, `docs/tasks.md`, `docs/HANDOFF.md`
+- Updated `docs/plugin-reference.md` (if it exists)
 - `README.md` (if updated)
 - `CLAUDE.md` (if updated)
 - `git mv`'d archived plans/specs (the renames)
-- Project-specific docs from §9
+- Project-specific docs from §10
 
 **Don't stage:**
 - Harness scratch (`.claude/settings.local.json`, etc.)
@@ -196,14 +221,14 @@ Use a HEREDOC. **Don't push** (user handles that). **Don't amend** prior commits
 - **Don't invent facts.** Check `git log` if uncertain.
 - **Don't duplicate content.** Devlog owns session history. HANDOFF owns next-session pointer. README owns current state. Decisions own architectural rationale. Pick one home.
 - **Preserve style.** Match the existing tone in each doc.
-- **Repo before Notion.** If Notion sync fails, the repo is still authoritative — finish the commit and surface the Notion failure.
+- **Repo before Notion, but Notion is required.** Write the repo first (source of truth), then sync to Notion. Sync is not optional — if it fails, diagnose and retry rather than skipping.
 
 ## Final summary
 
 After the commit lands, show:
 - Files committed (with hash)
 - Files left unstaged (so user knows what's still in working tree)
-- Notion sync status (synced / partial / skipped)
+- Notion sync status (synced / partial — partial means follow up before ending)
 - Inferred motives flagged
 - Push status: "not pushed; up to you"
 

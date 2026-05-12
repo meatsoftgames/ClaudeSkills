@@ -1,11 +1,11 @@
 ---
 name: resume-project
-description: Use this skill when the user says "refresh yourself on the project", "get up to speed", "resume project", or an obvious variant that asks you to orient on current project state before proceeding (e.g., "catch me up", "where were we", "what's the state of things"). Reads CLAUDE.md, the repo's docs/ tree, current git state, and the matching Obsidian project folder (via mcp__obsidian__* tools if available), then summarizes what was last completed plus any handoff notes. The user invokes this at session start to re-ground on the latest work and confirm you have current context — don't skip it when they ask. The goal is a tight "here's where we left off" reminder, not a full project tour.
+description: Use this skill when the user says "refresh yourself on the project", "get up to speed", "resume project", or an obvious variant that asks you to orient on current project state before proceeding (e.g., "catch me up", "where were we", "what's the state of things"). Reads CLAUDE.md, PROJECT.md, docs/HANDOFF.md, docs/plugin-reference.md (if present), the active branch's spec/plan, and current git state, then summarizes what was last completed plus any handoff notes. The user invokes this at session start to re-ground on the latest work and confirm you have current context — don't skip it when they ask. The goal is a tight "here's where we left off" reminder, not a full project tour.
 ---
 
 # Resume Project
 
-Orient at the start of a session by reading the current repo's docs and the matching Obsidian project folder, then summarize where the last session left off.
+Orient at the start of a session by reading the project's standing docs and the active branch's work-in-progress, then summarize where the last session left off.
 
 ## Why this exists
 
@@ -17,25 +17,34 @@ The output is a short summary, not an essay. The user wrote the docs; they don't
 
 ### 1. CLAUDE.md
 
-If the repo has `CLAUDE.md` at the root, read it first. Projects that use it typically list — in order — the docs a fresh session should read ("Read these, in order: README, then design/foo.md, then plans/bar.md..."). Follow its lead. It often also carries user preferences (tone, don'ts, user's role context).
+Read `CLAUDE.md` at the repo root first. It carries the orientation: read-order, tone preferences, doc layout, development flow. Follow whatever it specifies.
 
-No `CLAUDE.md`? Infer the layout yourself. Common shape:
-- `README.md` — project summary + current status
-- `HANDOFF.md` — explicit "read this first next session" note, if the previous session wrote one
-- `docs/devlog.md` or `docs/devlog/` — append-only session log, most recent entry is what matters
-- `docs/plans/` — phased plan files with `- [ ]` / `- [x]` checkboxes showing progress
-- `docs/design/`, `docs/research/` — architecture and background (skim only if the devlog references them)
+If `CLAUDE.md` is missing, note that in the summary — the project hasn't been initialized with the standard scaffolding.
 
-### 2. Git state
+### 2. PROJECT.md
+
+Read `PROJECT.md` at the repo root next. This is the project's specifics — architecture, project rules, best practices, conventions. If it's a stub or missing, note that and continue.
+
+### 3. docs/HANDOFF.md
+
+Read `docs/HANDOFF.md` — the explicit "where we left off / what's next" pointer written by the previous session's `end-project`. This is the single highest-value file for re-grounding.
+
+### 4. docs/plugin-reference.md (if it exists)
+
+If `docs/plugin-reference.md` is present, read it. It's a quick "how does this whole thing work" overview for plugin projects (Unity packages, Claude plugins, etc.) — saves you from reading the entire codebase to understand the shape of the thing.
+
+If the file isn't there, skip silently — not every project is a plugin project.
+
+### 5. Git state
 
 Run in parallel:
 - `git log --oneline -15` — what recently shipped
 - `git status` — uncommitted or untracked files (often = in-progress work from last session)
 - `git stash list` — stashed work, easy to miss
 
-Note whether the branch is ahead of origin (something committed but unpushed) or if there's a dirty working tree that doesn't match the devlog's "Handoff state" — both are real signals.
+Note whether the branch is ahead of origin (something committed but unpushed) or if there's a dirty working tree that doesn't match HANDOFF's state — both are real signals.
 
-### 2.5. Active branch context (if not on `main`/`master`)
+### 6. Active branch context (if not on `main`/`master`)
 
 If `git branch --show-current` returns anything other than `main` or `master`, you're mid-feature. Before continuing, read the work-in-progress docs for this branch:
 
@@ -46,22 +55,6 @@ If `git branch --show-current` returns anything other than `main` or `master`, y
 5. If there's no spec/plan for this branch, say so explicitly — that branch is operating on the lighter flow, and the devlog/git history is the only record.
 
 Skip this step entirely on `main`/`master` — it's not relevant.
-
-### 3. Obsidian project folder (if available)
-
-Check whether `mcp__obsidian__*` tools are loaded. If not, skip this section silently — don't apologize for its absence, just move on.
-
-The project folder in the vault is usually named similarly to the repo's directory — commonly the repo's name in CamelCase (e.g., repo `voxel-hdrp` → Obsidian folder `Voxel-Hdrp`; repo `my-app` → `My-App` or `my-app`). Try the obvious match first:
-
-1. `mcp__obsidian__list_directory` on the candidate folder name.
-2. If that 404s, `mcp__obsidian__search_notes` with the repo name as the query. Look for a folder containing an `_index.md`, a `devlog/` subfolder, or notes that clearly reference the repo.
-3. Use judgment. If you find one obvious match, use it. If you find several candidates, ask the user once: "I see `Foo`, `Foo-Old`, `FooArchive` — which is the active one?" Don't guess silently.
-4. If there's no match at all, proceed without Obsidian. Don't invent one.
-
-Once located, read:
-- The index note (`_index.md`, `index.md`, or `README.md` at the folder root) — it usually carries the "current focus" pointer.
-- The most recent file in `devlog/`. Most active projects put a "Handoff / next session" section at the end — that's the highest-value paragraph in the whole read.
-- Skim `knowledge/` only if the index or recent devlog references a specific note as still-load-bearing. Don't exhaustively crawl.
 
 ## What to report
 
@@ -88,7 +81,7 @@ Match the user's preferred tone if CLAUDE.md or saved memory specifies it. The d
 
 **Trust the reflective record over the plan.** If CLAUDE.md or a plan file says one thing but the devlog and recent commits say another, the devlog is authoritative — it's written after the fact, with actual knowledge of what happened. Flag the discrepancy as worth fixing later; don't try to reconcile it unprompted.
 
-**Graceful degradation.** If any source is missing (no CLAUDE.md, no Obsidian, no devlog, shallow git history), use what you have and note what's absent so the user knows the summary is partial.
+**Graceful degradation.** If any source is missing (no CLAUDE.md, no PROJECT.md, no HANDOFF.md, shallow git history), use what you have and note what's absent so the user knows the summary is partial.
 
 ## When things look suspicious
 

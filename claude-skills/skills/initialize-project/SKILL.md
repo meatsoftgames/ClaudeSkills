@@ -1,6 +1,6 @@
 ---
 name: initialize-project
-description: Use when starting a new project OR upgrading an existing one (any language/framework — Unity, web, C++, library, generic) to the standard MeatSoft setup. Verifies the superpowers plugin is installed (blocks if not), builds the docs/ scaffolding silently, scaffolds PROJECT.md alongside CLAUDE.md, then interactively generates a tailored CLAUDE.md baking in the required-reading rule (CLAUDE.md + PROJECT.md every session), development flow, approval gates, code principles, pushback expectations, doc-path overrides for superpowers, and superpowers integration. When an existing CLAUDE.md has real content, migrates project-specific blocks (architecture, project rules, conventions, etc.) into PROJECT.md before regenerating CLAUDE.md from the latest template. Single entry point — replaces the older create-claude-md and create-documentation skills.
+description: Use when starting a new project OR upgrading an existing one (any language/framework — Unity, web, C++, library, generic) to the standard MeatSoft setup. Verifies the superpowers plugin is installed (blocks if not), builds the docs/ scaffolding silently, scaffolds PROJECT.md alongside CLAUDE.md, scaffolds docs/plugin-reference.md when the project is itself a plugin (Unity package, Claude plugin, VSCode extension, etc.), then interactively generates a tailored CLAUDE.md baking in the required-reading rule (CLAUDE.md + PROJECT.md every session), development flow, approval gates, code principles, pushback expectations, doc-path overrides for superpowers, and superpowers integration. When an existing CLAUDE.md has real content, migrates project-specific blocks (architecture, project rules, conventions, etc.) into PROJECT.md before regenerating CLAUDE.md from the latest template. Single entry point — replaces the older create-claude-md and create-documentation skills.
 user_invocable: true
 ---
 
@@ -75,7 +75,9 @@ b. **What's the project name?** (Used in the CLAUDE.md header.)
 
 c. **(Unity projects only)** What's the Unity project folder name on disk? (Used so Claude can match the right Unity MCP instance — multiple Unity instances are usually open at once.)
 
-d. **Anything else this CLAUDE.md should mention?** Project-specific rules, tools, conventions. Optional — "no" is a valid answer.
+d. **Is this a plugin project?** (Unity package/tool, Claude plugin, VSCode extension, Figma plugin, etc.) If yes, we'll scaffold `docs/plugin-reference.md` — a quick "how does this whole thing work" doc that future sessions read at startup and `end-project` keeps current. Default yes for Unity tool/package and library project types; default no for Unity game, web app, generic.
+
+e. **Anything else this CLAUDE.md should mention?** Project-specific rules, tools, conventions. Optional — "no" is a valid answer.
 
 ### 4. Build doc scaffolding (silent)
 
@@ -95,14 +97,15 @@ Files and stubs:
 - `docs/tasks.md` — stub below.
 - `docs/FAQ.md` — stub below.
 - `docs/gotchas.md` — stub below.
+- `docs/plugin-reference.md` — **only if this is a plugin project** (answer to question d). Stub below.
 - `PROJECT.md` (project root, alongside CLAUDE.md) — stub below.
 
 Do **not** create `CLAUDE.md` here — that's step 5.
 
 ### 5. Render and confirm CLAUDE.md
 
-1. Fill the CLAUDE.md template using the answers from step 3. Substitute `{{PROJECT_NAME}}` and (Unity only) `{{UNITY_PROJECT_FOLDER}}`. Omit the entire **Unity MCP** section for non-Unity projects.
-2. Append the answer to question (d) under **Project-specific notes** (or leave `_None._` if "no").
+1. Fill the CLAUDE.md template using the answers from step 3. Substitute `{{PROJECT_NAME}}` and (Unity only) `{{UNITY_PROJECT_FOLDER}}`. Omit the entire **Unity MCP** section for non-Unity projects. Omit the `docs/plugin-reference.md` line in the **Doc layout** section for non-plugin projects.
+2. Append the answer to question (e) under **Project-specific notes** (or leave `_None._` if "no").
 3. Show the full rendered file in a fenced markdown block.
 4. Ask: **"Save as ./CLAUDE.md, edit, or abort?"**
    - **save** → write `./CLAUDE.md`.
@@ -116,8 +119,9 @@ Report:
 
 - Doc scaffolding: created vs already existed (group by path).
 - `PROJECT.md`: created (stub) vs already existed.
-- CLAUDE.md: written / aborted, project type, Unity MCP section in or out, extras appended y/n.
-- Reminder: nothing was committed; user reviews and commits. Also remind the user to fill in `PROJECT.md` — it ships as a stub.
+- `docs/plugin-reference.md`: created (stub) / skipped (not a plugin project) / already existed.
+- CLAUDE.md: written / aborted, project type, plugin project y/n, Unity MCP section in or out, extras appended y/n.
+- Reminder: nothing was committed; user reviews and commits. Remind the user to fill in `PROJECT.md` — it ships as a stub. If a plugin project, also remind them to fill in `docs/plugin-reference.md`.
 
 Then stop.
 
@@ -172,6 +176,7 @@ If one of our folders is missing, fall back to the superpowers default for that 
 - `docs/decisions/` — architectural decisions (ADR-style).
 - `docs/devlog/` — one entry per session, written by `/claude-skills:end-project`.
 - `docs/HANDOFF.md` — live next-session resume point, read by `/claude-skills:resume-project`.
+- `docs/plugin-reference.md` — quick "how does this whole thing work" overview of the plugin's shape, entry points, and conventions. Read by `/claude-skills:resume-project`, updated without fail by `/claude-skills:end-project`.
 - `docs/tasks.md` — backlog.
 - `docs/gotchas.md` — post-hoc "bit us" notes.
 - `docs/FAQ.md` — project Q&A.
@@ -364,6 +369,38 @@ _No questions yet._
 Numbered list of post-hoc "we got bitten by X" notes.
 
 Format: short title, what bit us, the fix, and a `See:` pointer to the commit or file.
+```
+
+### `docs/plugin-reference.md` (plugin projects only)
+
+```markdown
+# Plugin Reference
+
+A quick "how does this whole thing work" overview of this plugin. Read at session start so future sessions don't have to spelunk the codebase to understand the shape of the thing. Kept current by `/claude-skills:end-project` — when plugin shape changes, this file changes in the same commit.
+
+## What this plugin is
+
+_TODO: one-paragraph elevator pitch. What it does, what it plugs into (Unity, Claude Code, VSCode, etc.), the surface it exposes._
+
+## Entry points
+
+_TODO: where the host loads us. Manifest path, registration function, hook names, command names — whatever the host uses to discover us._
+
+## Internal shape
+
+_TODO: subsystems, key types, where things live. The mental model a fresh reader needs before opening files._
+
+## Conventions
+
+_TODO: naming, file layout, anything plugin-specific (e.g. "every command lives in `commands/<name>.ts` and exports `default`")._
+
+## Extension points
+
+_TODO: where future work usually plugs in. New command? Add a file here. New hook? Register it there._
+
+## Gotchas worth knowing up front
+
+_TODO: things a fresh reader would otherwise trip on. Cross-link to `docs/gotchas.md` rather than duplicating._
 ```
 
 ### `PROJECT.md` (project root, alongside CLAUDE.md)
